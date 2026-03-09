@@ -1,0 +1,11 @@
+﻿{
+  "modpacks": {
+    "1.21.11": [
+      {
+        "id": "fabric-api",
+        "fileName": "fabric-api-0.141.3+1.21.11.jar",
+        "localPath": "bundled-mods/1.21.11/fabric-api-0.141.3+1.21.11.jar"
+      }
+    ]
+  }
+}

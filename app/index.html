@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PapuClient</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="side-top">
+          <img class="logo" src="../images/icon_client.png" alt="PapuClient" />
+        </div>
+        <button class="icon-btn active" data-view="home" aria-label="Home">
+          <span class="icon-hit"><img class="sidebar-icon" src="../images/icons/home_icon_sidebar.png" alt="" /></span>
+        </button>
+        <button class="icon-btn" data-view="versions" aria-label="Versions">
+          <span class="icon-hit"><img class="sidebar-icon" src="../images/icons/versions_icon_sidebar.png" alt="" /></span>
+        </button>
+        <button class="icon-btn" data-view="mods" aria-label="Mods">
+          <span class="icon-hit"><img class="sidebar-icon" src="../images/icons/mods_icon_sidebar.png" alt="" /></span>
+        </button>
+        <button class="icon-btn" id="sidebarChatsBtn" data-view="chat" aria-label="Chats">
+          <span class="icon-hit"><img class="sidebar-icon" src="../images/icons/chats_icon_sidebar.png" alt="" /></span>
+        </button>
+        <button class="icon-btn" id="sidebarSettingsBtn" aria-label="Settings">
+          <span class="icon-hit text">S</span>
+        </button>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="top-left">
+            <div class="brand-cluster">
+              <img class="logo small" src="../images/icon_client.png" alt="PapuClient" />
+              <div class="brand-copy">
+                <span class="brand">PapuClient</span>
+                <span class="brand-sub">Launcher oficial</span>
+              </div>
+            </div>
+            <div class="topbar-status">
+              <span class="online"><span class="dot"></span><span id="onlineCount">32187</span> En linea</span>
+              <span class="crumb" id="crumbText">Inicio</span>
+            </div>
+          </div>
+          <div class="top-right">
+            <div class="account-menu-wrap" id="accountMenuWrap">
+              <button class="account account-card" id="accountCardBtn" title="Cuenta">
+                <img id="accountAvatar" class="account-avatar" src="../images/icons/grass_block.png" alt="" />
+                <span class="account-copy">
+                  <span class="account-label">Cuenta</span>
+                  <span id="accountText">Invitado</span>
+                </span>
+                <span class="account-caret">▼</span>
+              </button>
+              <div class="account-dropdown hidden" id="accountDropdown">
+                <button class="account-dropdown-item" id="accountSettingsBtn">Configuracion</button>
+                <button class="account-dropdown-item danger" id="accountLogoutBtn">Cerrar sesion</button>
+              </div>
+            </div>
+            <span class="instance-pill" id="instancePill">0 Instancias activas</span>
+            <div class="window-actions">
+              <button id="winMinBtn" title="Minimizar">-</button>
+              <button id="winMaxBtn" title="Maximizar">[]</button>
+              <button id="winCloseBtn" title="Cerrar">x</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="main-shell">
+          <div class="content-shell">
+            <section class="section home-view" id="homeView">
+              <div class="dashboard-grid">
+                <section class="hero-panel">
+                  <div class="hero-backdrop"></div>
+                  <div class="hero-copy">
+                    <span class="hero-kicker">PapuClient Control Center</span>
+                    <h1>Todo listo para entrar a jugar</h1>
+                    <p>
+                      Gestiona tu perfil, revisa actividad social y lanza tu instancia principal sin salir del dashboard.
+                    </p>
+                    <div class="hero-highlights">
+                      <div class="hero-chip">
+                        <span class="hero-chip-label">Version activa</span>
+                        <strong id="activeVersionText">Vanilla 1.21.11 con Fabric</strong>
+                      </div>
+                      <div class="hero-chip hero-chip-memory">
+                        <span class="hero-chip-label">Memoria</span>
+                        <strong id="memorySummary">4 GB asignados</strong>
+                        <label class="hero-ram-control" for="heroMemoryMb">
+                          <span>Asignar RAM</span>
+                          <select id="heroMemoryMb">
+                            <option value="2048">2 GB</option>
+                            <option value="3072">3 GB</option>
+                            <option value="4096" selected>4 GB</option>
+                            <option value="6144">6 GB</option>
+                            <option value="8192">8 GB</option>
+                            <option value="12288">12 GB</option>
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="launch-stack" id="launchStack">
+                      <div class="launch-row">
+                        <button id="playBtnTop" class="btn launch">JUGAR</button>
+                        <button id="playVersionBtn" class="btn launch-version-btn" title="Cambiar version">
+                          <img src="../images/icons/arrow_icon_versions.png" alt="" />
+                        </button>
+                      </div>
+                      <div id="heroVersionMenu" class="hero-version-menu hidden"></div>
+                      <button id="playVersionInfoBtn" class="hero-sub version-sub" title="Cambiar version activa">
+                        <img class="mini-block-icon" src="../images/icons/grass_block.png" alt="" />
+                        <span id="launchVersionLabel">Vanilla 1.21.11 + Fabric - 4 GB</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="hero-side">
+                    <div class="hero-stat-card">
+                      <span>Amigos conectados</span>
+                      <strong id="onlineFriendsCount">0</strong>
+                      <small>Chat en vivo listo</small>
+                    </div>
+                    <div class="hero-stat-card">
+                      <span>Mods instalados</span>
+                      <strong id="installedModsCount">0</strong>
+                      <small>Sincronizados con tu perfil local</small>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="activity-panel">
+                  <div class="panel-head">
+                    <div>
+                      <span class="panel-kicker">Actividad</span>
+                      <h2>Noticias y estado</h2>
+                    </div>
+                  </div>
+                  <div class="activity-grid">
+                    <article class="news-feature-card uhc-feature-card">
+                      <span class="badge badge-compact">UHC</span>
+                      <div class="event-feature-head">
+                        <img class="event-feature-logo" src="../images/minecraft_event_uhc.png" alt="Papu Uhc" />
+                        <div>
+                          <h3>PAPU UHC 1.21.8</h3>
+                          <p>Tu evento principal del launcher, con arranque en duos y foco competitivo.</p>
+                        </div>
+                      </div>
+                      <div class="event-feature-meta">
+                        <span>Version: 1.21.8</span>
+                        <span>Modo: Duos</span>
+                        <span>Inicio: 9:30 PM</span>
+                        <span>Late Start: 10:00 PM</span>
+                      </div>
+                    </article>
+                    <div class="news-mini-list">
+                      <article class="news-mini-card">
+                        <strong>Version oficial</strong>
+                        <span>El evento se jugara sobre Minecraft 1.21.8 con la config principal del launcher.</span>
+                      </article>
+                      <article class="news-mini-card">
+                        <strong>Horario</strong>
+                        <span>La ventana del evento va de 9:30 PM a 10:00 PM para inicio y entrada de jugadores.</span>
+                      </article>
+                      <article class="news-mini-card">
+                        <strong>Formato</strong>
+                        <span>El arranque sera en duos, pensado para pelea temprana y ritmo rapido.</span>
+                      </article>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </section>
+
+            <section class="section versions-view hidden" id="versionsView">
+              <div class="versions-layout">
+                <div>
+                  <div class="versions-head">
+                    <h2>VERSIONES</h2>
+                    <div class="versions-tools">
+                      <select id="loaderVersion"></select>
+                      <input id="memoryMb" type="number" min="2048" step="512" value="4096" />
+                    </div>
+                  </div>
+                  <div class="versions-grid" id="versionsGrid"></div>
+                </div>
+                <aside class="selected-panel">
+                  <h2>VERSION SELECCIONADA</h2>
+                  <div class="selected-image" id="selectedImage"></div>
+                  <h3 id="selectedTitle">Minecraft</h3>
+                  <p id="selectedDesc">Selecciona una version para ver detalles.</p>
+                  <div class="selected-meta">
+                    <div><span>Version</span><b id="selectedVersionValue">-</b></div>
+                    <div><span>Loader</span><b id="selectedLoaderValue">-</b></div>
+                  </div>
+                  <button id="playBtn" class="btn launch full">JUGAR</button>
+                </aside>
+              </div>
+            </section>
+
+            <section class="section mods-view hidden" id="modsView">
+              <div class="mods-shell">
+                <div class="mods-toolbar">
+                  <button class="mods-toolbar-pill" type="button">Mods</button>
+                  <div class="mods-search-wrap">
+                    <span class="mods-search-icon">&#9673;</span>
+                    <input id="modsSearch" class="mods-search lunar" placeholder="Search Modrinth..." />
+                  </div>
+                  <label class="mods-sort-wrap">
+                    <span>Sort by:</span>
+                    <select id="modsSort">
+                      <option value="downloads">Popularity</option>
+                      <option value="relevance">Relevance</option>
+                      <option value="updated">Updated</option>
+                      <option value="newest">Newest</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div class="mods-filter-strip">
+                  <div class="mods-filter-group inline">
+                    <span class="mods-filter-title">Categorias</span>
+                    <div class="mods-filter-list" id="categoryFilters"></div>
+                  </div>
+
+                  <div class="mods-filter-group inline">
+                    <span class="mods-filter-title">Version</span>
+                    <div class="mods-filter-list" id="compatibilityFilters"></div>
+                  </div>
+
+                  <div class="mods-filter-group inline">
+                    <span class="mods-filter-title">Estado</span>
+                    <div class="mods-filter-list" id="stateFilters"></div>
+                  </div>
+                </div>
+
+                <div class="mods-browser-meta compact">
+                  <span id="modsResultsSummary">0 resultados</span>
+                  <span id="modsInstalledSummary">0 instalados</span>
+                </div>
+
+                <div class="mods-list" id="modsGrid"></div>
+
+                <div class="mods-pagination">
+                  <button id="modsPrevBtn" class="pagination-btn">Anterior</button>
+                  <span id="modsPageInfo">Pagina 1</span>
+                  <button id="modsNextBtn" class="pagination-btn">Siguiente</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="section chat-view hidden" id="chatView">
+              <div class="chat-page-shell">
+                <aside class="friends-panel chat-directory">
+                  <div class="social-dock-head">
+                    <div>
+                      <span class="panel-kicker">Social</span>
+                      <h2>Chats</h2>
+                    </div>
+                    <div class="social-dock-actions">
+                      <button class="social-icon-btn" id="socialQuickAddBtn" title="Nuevo chat">
+                        <img src="../images/icons/chats_icon_sidebar.png" alt="" />
+                      </button>
+                      <button class="social-icon-btn" id="addFriendBtn" title="Agregar amigo">
+                        <img src="../images/icons/mods_icon_sidebar.png" alt="" />
+                      </button>
+                    </div>
+                  </div>
+                  <div class="friends-toolbar dock">
+                    <input id="friendsSearch" class="social-search" placeholder="Buscar amigo..." />
+                  </div>
+                  <div class="friends-list" id="friendsList"></div>
+                </aside>
+
+                <section class="chat-panel chat-main-panel">
+                  <div class="chat-head">
+                    <div class="chat-head-user">
+                      <img id="chatFriendAvatar" class="chat-head-avatar" src="../images/icons/grass_block.png" alt="" />
+                      <div>
+                        <strong id="chatFriendName">Selecciona un amigo</strong>
+                        <span id="chatFriendState">Sin conversacion activa</span>
+                      </div>
+                    </div>
+                    <button class="chat-voice-btn" id="chatCallBtn" title="Llamar">
+                      <img src="../images/icons/call_icon.png" alt="" />
+                    </button>
+                  </div>
+                  <div class="chat-thread" id="chatThread"></div>
+                  <form class="chat-compose" id="chatForm">
+                    <input id="chatInput" class="chat-input" placeholder="Escribe un mensaje..." />
+                    <button class="chat-send" type="submit">Enviar</button>
+                  </form>
+                </section>
+              </div>
+            </section>
+
+            <footer class="statusbar" id="status">Cargando launcher...</footer>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

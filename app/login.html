@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - PapuClient</title>
+    <link rel="stylesheet" href="./login.css" />
+  </head>
+  <body>
+    <main class="login-shell">
+      <section class="login-window">
+        <img class="login-logo" src="../images/icon_client.png" alt="PapuClient" />
+        <span class="login-badge">Acceso PapuClient</span>
+        <h1>Inicia sesion con tu cuenta de Minecraft</h1>
+        <p class="login-copy">
+          Primero accedes con Microsoft. Cuando termine, esta ventana se cierra y se abre el launcher principal.
+        </p>
+
+        <div class="profile-card">
+          <img id="loginAvatar" class="profile-avatar" src="../images/icons/grass_block.png" alt="" />
+          <div class="profile-copy">
+            <strong id="loginName">Invitado</strong>
+            <span id="loginHint">Cuenta de Minecraft</span>
+          </div>
+        </div>
+
+        <button id="loginBtn" class="login-btn">Entrar con Microsoft</button>
+        <p id="loginStatus" class="login-status">Esperando autenticacion...</p>
+      </section>
+    </main>
+    <script src="./login.js"></script>
+  </body>
+</html>
