@@ -7,7 +7,7 @@
   "author": "PapuClient",
   "repository": {
     "type": "git",
-    "url": "https://github.com/VixoPapu/papu-client.git"
+    "url": "https://github.com/VixoPapu/papu-client-download.git"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -72,7 +72,7 @@
       {
         "provider": "github",
         "owner": "VixoPapu",
-        "repo": "papu-client"
+        "repo": "papu-client-download"
       }
     ]
   }
