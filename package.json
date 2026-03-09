@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "description": "PapuClient launcher oficial",
   "author": "PapuClient",
   "repository": {
@@ -36,7 +37,7 @@
     "productName": "PapuClient",
     "artifactName": "${productName}-Setup-${version}.${ext}",
     "directories": {
-      "output": "release"
+      "output": "artifacts"
     },
     "files": [
       "app/**/*",
@@ -60,7 +61,8 @@
       "target": [
         "nsis"
       ],
-      "icon": "images/icon_client.png"
+      "icon": "images/icon_client.png",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
