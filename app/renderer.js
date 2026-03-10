@@ -1128,7 +1128,15 @@ async function bootstrap() {
     if (!removeLaunchListener && typeof window.papu.onLaunchProgress === "function") {
       removeLaunchListener = window.papu.onLaunchProgress((payload) => {
         if (payload?.message) {
-          launchPhase = instanceRunning ? "running" : "installing";
+          if (payload.stage === "closed") {
+            instanceRunning = false;
+            launchPhase = "idle";
+          } else if (payload.stage === "running") {
+            instanceRunning = true;
+            launchPhase = "running";
+          } else {
+            launchPhase = "installing";
+          }
           updateLaunchState();
           setStatus(payload.message);
         }

@@ -333,7 +333,11 @@ ipcMain.handle("papu:launch", async (_event, payload) => {
   const service = await loadService();
   const sender = _event.sender;
   await service.startLaunch(payload, (message) => {
-    sender.send("papu:launch:progress", { message });
+    try {
+      sender.send("papu:launch:progress", JSON.parse(message));
+    } catch {
+      sender.send("papu:launch:progress", { message });
+    }
   });
   return { ok: true };
 });

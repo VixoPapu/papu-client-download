@@ -12,11 +12,20 @@ export type LaunchConfig = {
 };
 
 type LaunchProgressReporter = (message: string) => void;
+type LaunchProgressState = "installing" | "running" | "closed";
+type LaunchProgressPayload = {
+  message: string;
+  stage: LaunchProgressState;
+};
+
+function emitProgress(report: LaunchProgressReporter | undefined, message: string, _stage: LaunchProgressState): void {
+  report?.(JSON.stringify({ message, stage: _stage } satisfies LaunchProgressPayload));
+}
 
 async function ensureFabricVersionJson(root: string, gameVersion: string, fabricLoaderVersion: string, report?: LaunchProgressReporter): Promise<string> {
   const versionId = `fabric-loader-${fabricLoaderVersion}-${gameVersion}`;
   const profileUrl = `https://meta.fabricmc.net/v2/versions/loader/${gameVersion}/${fabricLoaderVersion}/profile/json`;
-  report?.(`Descargando perfil de Fabric ${fabricLoaderVersion} para ${gameVersion}...`);
+  emitProgress(report, `Descargando perfil de Fabric ${fabricLoaderVersion} para ${gameVersion}...`, "installing");
   const response = await fetch(profileUrl);
 
   if (!response.ok) {
@@ -29,7 +38,7 @@ async function ensureFabricVersionJson(root: string, gameVersion: string, fabric
 
   await fs.mkdir(versionDir, { recursive: true });
   await fs.writeFile(versionJsonPath, profileText, "utf8");
-  report?.("Perfil de Fabric listo.");
+  emitProgress(report, "Perfil de Fabric listo.", "installing");
 
   return versionId;
 }
@@ -50,17 +59,17 @@ export async function launchMinecraft(auth: MinecraftAuth, cfg: LaunchConfig, re
   const launcher = new Client();
   const root = getDataRoot();
 
-  report?.(`Preparando ${cfg.gameVersion} + Fabric ${cfg.fabricLoaderVersion}...`);
+  emitProgress(report, `Preparando ${cfg.gameVersion} + Fabric ${cfg.fabricLoaderVersion}...`, "installing");
   const versionId = await ensureFabricVersionJson(root, cfg.gameVersion, cfg.fabricLoaderVersion, report);
   const gameDirectory = path.join(root, "instances", versionId);
 
-  report?.("Instalando mods base del launcher...");
+  emitProgress(report, "Instalando mods base del launcher...", "installing");
   await syncRequiredMods({
     root,
     gameVersion: cfg.gameVersion,
     instanceDir: gameDirectory
   });
-  report?.("Mods base listos. Verificando archivos de Minecraft...");
+  emitProgress(report, "Mods base listos. Verificando archivos de Minecraft...", "installing");
 
   const options = {
     authorization: auth.mclcAuth,
@@ -89,12 +98,13 @@ export async function launchMinecraft(auth: MinecraftAuth, cfg: LaunchConfig, re
   launcher.on("data", (e: unknown) => console.log("[mc]", e));
   launcher.on("progress", (e: unknown) => {
     console.log("[download]", e);
-    report?.(formatLauncherProgress(e));
+    emitProgress(report, formatLauncherProgress(e), "installing");
   });
   launcher.on("close", () => {
-    report?.("Minecraft se cerro.");
+    emitProgress(report, "Minecraft se cerro.", "closed");
   });
 
-  report?.("Iniciando Minecraft. La primera carga puede tardar varios minutos...");
+  emitProgress(report, "Iniciando Minecraft. La primera carga puede tardar varios minutos...", "installing");
   await launcher.launch(options);
+  emitProgress(report, "Minecraft lanzado.", "running");
 }
