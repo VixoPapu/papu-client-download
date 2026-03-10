@@ -158,14 +158,6 @@ export async function syncRequiredMods(input: SyncInput): Promise<void> {
     }
   }
 
-  const presentFiles = await fs.readdir(modsDir);
-  const requiredNames = new Set(requiredMods.map((m) => m.fileName));
-
-  for (const fileName of presentFiles) {
-    if (!requiredNames.has(fileName)) {
-      const extraPath = path.join(modsDir, fileName);
-      await fs.rm(extraPath, { force: true });
-      console.log(`[mods] Removido mod no permitido: ${fileName}`);
-    }
-  }
+  // Keep user-installed mods. The launcher should ensure the base pack exists,
+  // not aggressively delete everything that wasn't bundled.
 }
