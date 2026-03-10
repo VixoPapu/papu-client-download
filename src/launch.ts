@@ -58,6 +58,15 @@ function formatLauncherProgress(payload: any): string {
 export async function launchMinecraft(auth: MinecraftAuth, cfg: LaunchConfig, report?: LaunchProgressReporter): Promise<void> {
   const launcher = new Client();
   const root = getDataRoot();
+  const recentLines: string[] = [];
+  let hasReachedRunningState = false;
+
+  function rememberLine(prefix: string, value: unknown): void {
+    const text = String(value ?? "").trim();
+    if (!text) return;
+    recentLines.push(`${prefix}${text}`);
+    if (recentLines.length > 12) recentLines.shift();
+  }
 
   emitProgress(report, `Preparando ${cfg.gameVersion} + Fabric ${cfg.fabricLoaderVersion}...`, "installing");
   const versionId = await ensureFabricVersionJson(root, cfg.gameVersion, cfg.fabricLoaderVersion, report);
@@ -94,17 +103,34 @@ export async function launchMinecraft(auth: MinecraftAuth, cfg: LaunchConfig, re
     }
   };
 
-  launcher.on("debug", (e: unknown) => console.log("[debug]", e));
-  launcher.on("data", (e: unknown) => console.log("[mc]", e));
+  launcher.on("debug", (e: unknown) => {
+    console.log("[debug]", e);
+    rememberLine("", e);
+  });
+  launcher.on("data", (e: unknown) => {
+    console.log("[mc]", e);
+    rememberLine("", e);
+  });
+  launcher.on("arguments", (e: unknown) => {
+    console.log("[args]", e);
+  });
   launcher.on("progress", (e: unknown) => {
     console.log("[download]", e);
     emitProgress(report, formatLauncherProgress(e), "installing");
   });
+  launcher.on("error", (e: unknown) => {
+    console.log("[launch-error]", e);
+    rememberLine("Error: ", e);
+  });
   launcher.on("close", () => {
-    emitProgress(report, "Minecraft se cerro.", "closed");
+    const suffix = !hasReachedRunningState && recentLines.length
+      ? ` Ultimo detalle: ${recentLines[recentLines.length - 1]}`
+      : "";
+    emitProgress(report, `Minecraft se cerro.${suffix}`, "closed");
   });
 
   emitProgress(report, "Iniciando Minecraft. La primera carga puede tardar varios minutos...", "installing");
   await launcher.launch(options);
+  hasReachedRunningState = true;
   emitProgress(report, "Minecraft lanzado.", "running");
 }

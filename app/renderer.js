@@ -361,6 +361,10 @@ function createPeerConnection() {
         remoteCallStream.addTrack(track);
       }
     }
+    if (remoteCallAudioEl) {
+      remoteCallAudioEl.srcObject = remoteCallStream;
+      remoteCallAudioEl.play().catch(() => {});
+    }
   };
 
   peer.onicecandidate = (event) => {
@@ -372,6 +376,7 @@ function createPeerConnection() {
   peer.onconnectionstatechange = () => {
     if (!peer) return;
     if (peer.connectionState === "connected") {
+      if (remoteCallAudioEl) remoteCallAudioEl.play().catch(() => {});
       setStatus("Llamada conectada.");
     } else if (peer.connectionState === "failed") {
       setStatus("La conexion de voz fallo.");
@@ -1591,12 +1596,14 @@ async function launchCurrent() {
   setStatus(`Preparando ${payload.gameVersion} + Fabric ${payload.loaderVersion}. La primera vez puede tardar...`);
   try {
     await window.papu.launch(payload);
-    instanceRunning = true;
-    launchPhase = "running";
-    updateLaunchState();
-    setStatus("Minecraft lanzado.");
+    if (launchPhase === "installing") {
+      launchPhase = "idle";
+      updateLaunchState();
+    }
   } catch (error) {
+    instanceRunning = false;
     launchPhase = "idle";
+    updateLaunchState();
     setStatus(`Error al lanzar: ${error.message || String(error)}`);
   } finally {
     setBusy(false);
