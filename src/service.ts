@@ -5,7 +5,7 @@ import { loginMicrosoft } from "./auth.js";
 import { getFabricGameVersions, getFabricLoadersForGameVersion, isFabricComboAvailable } from "./fabric.js";
 import { launchMinecraft } from "./launch.js";
 import { installModrinthMod, searchModrinthMods } from "./modrinth.js";
-import { addChatFriend, getChatStatus, sendChatMessageRemote, syncChatState, toggleChatCallRemote } from "./chat.js";
+import { addChatFriend, fetchChatCallSignals, getChatStatus, respondChatCallRemote, respondChatFriendRequest, sendChatCallSignal, sendChatMessageRemote, syncChatState, toggleChatCallRemote } from "./chat.js";
 import { getDataRoot } from "./paths.js";
 
 let currentAuth: MinecraftAuth | null = null;
@@ -274,10 +274,31 @@ export async function addRemoteChatFriend(input: { accountName: string }) {
   return addChatFriend(requireCurrentUser(), input.accountName);
 }
 
+export async function respondRemoteChatFriendRequest(input: { friendId: string; action: "accept" | "reject" }) {
+  return respondChatFriendRequest(requireCurrentUser(), input.friendId, input.action);
+}
+
 export async function sendRemoteChatMessage(input: { friendId: string; text: string }) {
   return sendChatMessageRemote(requireCurrentUser(), input.friendId, input.text);
 }
 
 export async function toggleRemoteChatCall(input: { friendId: string }) {
   return toggleChatCallRemote(requireCurrentUser(), input.friendId);
+}
+
+export async function fetchRemoteChatCallSignals(input: { sessionId: string; friendId: string; afterId: number }) {
+  return fetchChatCallSignals(requireCurrentUser(), input);
+}
+
+export async function sendRemoteChatCallSignal(input: {
+  sessionId: string;
+  friendId: string;
+  type: "offer" | "answer" | "ice-candidate" | "hangup";
+  payload: Record<string, unknown>;
+}) {
+  return sendChatCallSignal(requireCurrentUser(), input);
+}
+
+export async function respondRemoteChatCall(input: { friendId: string; action: "accept" | "reject" }) {
+  return respondChatCallRemote(requireCurrentUser(), input);
 }

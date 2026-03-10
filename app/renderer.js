@@ -54,7 +54,27 @@ const chatInputEl = document.getElementById("chatInput");
 const addFriendBtn = document.getElementById("addFriendBtn");
 const socialQuickAddBtn = document.getElementById("socialQuickAddBtn");
 const chatCallBtn = document.getElementById("chatCallBtn");
+const friendAddFormEl = document.getElementById("friendAddForm");
+const friendAddInputEl = document.getElementById("friendAddInput");
+const friendRequestsPanelEl = document.getElementById("friendRequestsPanel");
+const friendRequestsListEl = document.getElementById("friendRequestsList");
+const friendRequestsCountEl = document.getElementById("friendRequestsCount");
 const toastStackEl = document.getElementById("toastStack");
+const callControlsEl = document.getElementById("callControls");
+const callMuteBtn = document.getElementById("callMuteBtn");
+const callInputSelectEl = document.getElementById("callInputSelect");
+const callOutputSelectEl = document.getElementById("callOutputSelect");
+const callVolumeRangeEl = document.getElementById("callVolumeRange");
+const remoteCallAudioEl = document.getElementById("remoteCallAudio");
+const callSelfAvatarEl = document.getElementById("callSelfAvatar");
+const callFriendPresenceAvatarEl = document.getElementById("callFriendPresenceAvatar");
+const callPresenceTitleEl = document.getElementById("callPresenceTitle");
+const callPresenceSubtitleEl = document.getElementById("callPresenceSubtitle");
+const incomingCallBarEl = document.getElementById("incomingCallBar");
+const incomingCallTitleEl = document.getElementById("incomingCallTitle");
+const incomingCallSubtitleEl = document.getElementById("incomingCallSubtitle");
+const incomingCallAcceptBtn = document.getElementById("incomingCallAcceptBtn");
+const incomingCallRejectBtn = document.getElementById("incomingCallRejectBtn");
 
 const modsGridEl = document.getElementById("modsGrid");
 const modsSearchEl = document.getElementById("modsSearch");
@@ -72,7 +92,7 @@ let selectedGameVersion = "";
 let selectedLoaderVersion = "";
 let gameVersions = [];
 let currentUser = null;
-let selectedFriendId = "vixo";
+let selectedFriendId = "";
 let modsPage = 1;
 let activeCategoryFilter = "all";
 let activeCompatibilityFilter = "all";
@@ -89,37 +109,22 @@ const seenToastKeys = new Set();
 const remoteModsCache = new Map();
 let removeUpdateListener = null;
 let removeLaunchListener = null;
+let friendRequests = [];
+let callPeerConnection = null;
+let localCallStream = null;
+let remoteCallStream = null;
+let callSignalPollerId = 0;
+let callSignalCursor = 0;
+let callOfferSent = false;
+const callDevices = { inputId: "default", outputId: "default", muted: false, volume: 100 };
+let incomingCallRingtone = null;
 
 const palettes = [["#7f3fa8", "#2a1d3f"], ["#8f386f", "#321931"], ["#6f4ac2", "#2b1f57"], ["#aa2b7b", "#3b1741"], ["#3a45af", "#1a214d"], ["#8231a7", "#2d1b4d"]];
 const MODS_PER_PAGE = 8;
 
-const defaultFriends = [
-  { id: "vixo", name: "VixoPapu", state: "Jugando Cobblemon SMP", status: "online", unread: 2 },
-  { id: "naza", name: "NazaBuilds", state: "Construyendo hub", status: "away", unread: 0 },
-  { id: "mili", name: "MiliPvP", state: "En cola ranked", status: "online", unread: 1 },
-  { id: "tomi", name: "TomiFPS", state: "Launcher abierto", status: "busy", unread: 0 },
-  { id: "sora", name: "SoraModder", state: "Desconectado", status: "offline", unread: 0 }
-];
+const defaultFriends = [];
 
-const initialConversations = {
-  vixo: [
-    { author: "friend", text: "Entra al SMP, ya estamos todos conectados.", time: "18:42" },
-    { author: "self", text: "Abro el launcher y entro en 2 minutos.", time: "18:43" }
-  ],
-  naza: [
-    { author: "friend", text: "Subi un nuevo spawn. Luego te muestro capturas.", time: "17:20" }
-  ],
-  mili: [
-    { author: "friend", text: "Necesito tu config de mods visuales para PvP.", time: "16:05" },
-    { author: "self", text: "Te la paso desde la biblioteca de mods.", time: "16:08" }
-  ],
-  tomi: [
-    { author: "friend", text: "Proba con mas memoria, te va a ir mejor.", time: "15:30" }
-  ],
-  sora: [
-    { author: "friend", text: "Cuando vuelvas mira el mod browser nuevo.", time: "ayer" }
-  ]
-};
+const initialConversations = {};
 
 let friends = getFriendsState();
 let activeCall = getCallState();
@@ -138,27 +143,31 @@ function normalizeModKey(value) {
 
 function getConversationState() {
   const raw = localStorage.getItem("papu.conversations");
-  if (!raw) return JSON.parse(JSON.stringify(initialConversations));
+  if (!raw) return {};
   try {
     return JSON.parse(raw);
   } catch {
-    return JSON.parse(JSON.stringify(initialConversations));
+    return {};
   }
 }
 
 function getFriendsState() {
   const raw = localStorage.getItem("papu.friends");
-  if (!raw) return JSON.parse(JSON.stringify(defaultFriends));
+  if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : JSON.parse(JSON.stringify(defaultFriends));
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return JSON.parse(JSON.stringify(defaultFriends));
+    return [];
   }
 }
 
 function saveFriendsState() {
   localStorage.setItem("papu.friends", JSON.stringify(friends));
+}
+
+function getRequestLabel(request) {
+  return request.direction === "incoming" ? "Quiere agregarte" : "Solicitud enviada";
 }
 
 function getCallState() {
@@ -178,6 +187,321 @@ function saveCallState() {
   } else {
     localStorage.removeItem("papu.activeCall");
   }
+}
+
+function normalizeActiveCallState() {
+  if (!activeCall?.friendId) {
+    activeCall = null;
+    saveCallState();
+    return;
+  }
+  const hasFriend = friends.some((friend) => friend.id === activeCall.friendId);
+  if (!hasFriend) {
+    activeCall = null;
+    saveCallState();
+  }
+}
+
+async function enumerateCallDevices() {
+  if (!navigator.mediaDevices?.enumerateDevices) return { inputs: [], outputs: [] };
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return {
+      inputs: devices.filter((device) => device.kind === "audioinput"),
+      outputs: devices.filter((device) => device.kind === "audiooutput")
+    };
+  } catch {
+    return { inputs: [], outputs: [] };
+  }
+}
+
+async function ensureLocalCallStream() {
+  if (localCallStream) return localCallStream;
+  const constraints = {
+    audio: callDevices.inputId && callDevices.inputId !== "default"
+      ? { deviceId: { exact: callDevices.inputId } }
+      : true,
+    video: false
+  };
+  localCallStream = await navigator.mediaDevices.getUserMedia(constraints);
+  for (const track of localCallStream.getAudioTracks()) {
+    track.enabled = !callDevices.muted;
+  }
+  return localCallStream;
+}
+
+function stopCallStream(stream) {
+  if (!stream) return;
+  for (const track of stream.getTracks()) {
+    track.stop();
+  }
+}
+
+function setRemoteAudioSink() {
+  if (!remoteCallAudioEl) return;
+  remoteCallAudioEl.volume = callDevices.volume / 100;
+  if (typeof remoteCallAudioEl.setSinkId === "function" && callDevices.outputId && callDevices.outputId !== "default") {
+    remoteCallAudioEl.setSinkId(callDevices.outputId).catch(() => {});
+  }
+}
+
+function syncIncomingCallRingtone() {
+  const shouldRing = Boolean(activeCall && !activeCall.isCaller && activeCall.status === "ringing");
+  if (!shouldRing) {
+    if (incomingCallRingtone) {
+      incomingCallRingtone.pause();
+      incomingCallRingtone.currentTime = 0;
+      incomingCallRingtone = null;
+    }
+    return;
+  }
+  if (!incomingCallRingtone) {
+    incomingCallRingtone = new Audio("../sounds/ringtone_call_sound.mp3");
+    incomingCallRingtone.loop = true;
+    incomingCallRingtone.volume = 0.18;
+  }
+  incomingCallRingtone.play().catch(() => {});
+}
+
+function updateCallControlsUI() {
+  const isIncomingRinging = Boolean(activeCall && !activeCall.isCaller && activeCall.status === "ringing");
+  const isActiveCall = Boolean(activeCall && activeCall.status === "active");
+  const activeFriend = friends.find((friend) => friend.id === activeCall?.friendId);
+  const shouldShowForSelectedFriend = Boolean(activeFriend && selectedFriendId && selectedFriendId === activeFriend.id);
+  if (callControlsEl) callControlsEl.classList.toggle("hidden", !(isActiveCall && shouldShowForSelectedFriend));
+  if (incomingCallBarEl) incomingCallBarEl.classList.toggle("hidden", !(isIncomingRinging && shouldShowForSelectedFriend));
+  if (callSelfAvatarEl) {
+    callSelfAvatarEl.src = currentUser ? skinHeadUrl(currentUser.uuid) : "../images/icons/grass_block.png";
+  }
+  if (callFriendPresenceAvatarEl) {
+    callFriendPresenceAvatarEl.src = activeFriend?.avatarUrl || (activeFriend ? `https://mc-heads.net/avatar/${encodeURIComponent(activeFriend.name)}/64` : "../images/icons/grass_block.png");
+  }
+  if (callPresenceTitleEl) {
+    callPresenceTitleEl.textContent = activeFriend ? `Llamada con ${activeFriend.name}` : "Llamada activa";
+  }
+  if (callPresenceSubtitleEl) {
+    callPresenceSubtitleEl.textContent = activeCall
+      ? (activeCall.isCaller ? "Canal de voz activo o esperando confirmacion." : "Canal de voz sincronizado con tu amigo.")
+      : "Tu audio y el de tu amigo se estan conectando.";
+  }
+  if (incomingCallTitleEl) {
+    incomingCallTitleEl.textContent = activeFriend ? `${activeFriend.name} te esta llamando` : "Llamada entrante";
+  }
+  if (incomingCallSubtitleEl) {
+    incomingCallSubtitleEl.textContent = isIncomingRinging ? "Acepta para abrir el canal de voz o rechaza para cortarla." : "Tu amigo quiere hablar contigo.";
+  }
+  if (callMuteBtn) {
+    callMuteBtn.textContent = callDevices.muted ? "Activar micro" : "Mutear";
+    callMuteBtn.classList.toggle("active", callDevices.muted);
+  }
+  if (callVolumeRangeEl instanceof HTMLInputElement) {
+    callVolumeRangeEl.value = String(callDevices.volume);
+  }
+  setRemoteAudioSink();
+  syncIncomingCallRingtone();
+}
+
+async function refreshCallDeviceSelectors() {
+  const { inputs, outputs } = await enumerateCallDevices();
+  if (callInputSelectEl instanceof HTMLSelectElement) {
+    callInputSelectEl.innerHTML = `<option value="default">Predeterminado</option>${inputs
+      .map((device, index) => `<option value="${escapeHtml(device.deviceId)}">${escapeHtml(device.label || `Microfono ${index + 1}`)}</option>`)
+      .join("")}`;
+    callInputSelectEl.value = callDevices.inputId;
+  }
+  if (callOutputSelectEl instanceof HTMLSelectElement) {
+    callOutputSelectEl.innerHTML = `<option value="default">Predeterminado</option>${outputs
+      .map((device, index) => `<option value="${escapeHtml(device.deviceId)}">${escapeHtml(device.label || `Salida ${index + 1}`)}</option>`)
+      .join("")}`;
+    callOutputSelectEl.value = callDevices.outputId;
+  }
+}
+
+async function recreateLocalAudioTrack() {
+  if (!callPeerConnection || !activeCall) return;
+  const sender = callPeerConnection.getSenders().find((entry) => entry.track?.kind === "audio");
+  stopCallStream(localCallStream);
+  localCallStream = null;
+  const stream = await ensureLocalCallStream();
+  const nextTrack = stream.getAudioTracks()[0];
+  if (sender && nextTrack) {
+    await sender.replaceTrack(nextTrack);
+  }
+}
+
+async function sendCallSignal(type, payload) {
+  if (!activeCall?.sessionId || !activeCall?.friendId) return;
+  await window.papu.sendRemoteChatCallSignal({
+    sessionId: activeCall.sessionId,
+    friendId: activeCall.friendId,
+    type,
+    payload
+  });
+}
+
+function createPeerConnection() {
+  if (callPeerConnection) return callPeerConnection;
+  const peer = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  });
+  callPeerConnection = peer;
+  remoteCallStream = new MediaStream();
+  if (remoteCallAudioEl) {
+    remoteCallAudioEl.srcObject = remoteCallStream;
+    setRemoteAudioSink();
+  }
+
+  peer.ontrack = (event) => {
+    if (!remoteCallStream) {
+      remoteCallStream = new MediaStream();
+      if (remoteCallAudioEl) remoteCallAudioEl.srcObject = remoteCallStream;
+    }
+    for (const track of event.streams[0]?.getTracks?.() || event.streams.flatMap((stream) => stream.getTracks())) {
+      if (!remoteCallStream.getTracks().some((existing) => existing.id === track.id)) {
+        remoteCallStream.addTrack(track);
+      }
+    }
+  };
+
+  peer.onicecandidate = (event) => {
+    if (event.candidate) {
+      sendCallSignal("ice-candidate", event.candidate.toJSON()).catch((error) => setStatus(`Error enviando ICE: ${error.message || String(error)}`));
+    }
+  };
+
+  peer.onconnectionstatechange = () => {
+    if (!peer) return;
+    if (peer.connectionState === "connected") {
+      setStatus("Llamada conectada.");
+    } else if (peer.connectionState === "failed") {
+      setStatus("La conexion de voz fallo.");
+    } else if (peer.connectionState === "disconnected") {
+      setStatus("La llamada se desconecto.");
+    }
+  };
+
+  return peer;
+}
+
+async function attachLocalTracks() {
+  const peer = createPeerConnection();
+  const stream = await ensureLocalCallStream();
+  const audioTrack = stream.getAudioTracks()[0];
+  if (!audioTrack) throw new Error("No se encontro un microfono disponible.");
+  const hasAudioSender = peer.getSenders().some((sender) => sender.track?.kind === "audio");
+  if (!hasAudioSender) {
+    peer.addTrack(audioTrack, stream);
+  }
+}
+
+async function ensureCallConnection() {
+  if (!activeCall?.sessionId || activeCall.status !== "active") return;
+  await attachLocalTracks();
+  createPeerConnection();
+  if (activeCall.isCaller && !callOfferSent) {
+    const peer = createPeerConnection();
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(offer);
+    await sendCallSignal("offer", offer.toJSON());
+    callOfferSent = true;
+    setStatus("Llamando y negociando audio...");
+  }
+}
+
+async function handleIncomingCallSignal(signal) {
+  const peer = createPeerConnection();
+  if (signal.type === "offer") {
+    await attachLocalTracks();
+    await peer.setRemoteDescription(new RTCSessionDescription(signal.payload));
+    const answer = await peer.createAnswer();
+    await peer.setLocalDescription(answer);
+    await sendCallSignal("answer", answer.toJSON());
+    setStatus("Llamada aceptada. Conectando audio...");
+    return;
+  }
+  if (signal.type === "answer") {
+    if (!peer.currentRemoteDescription) {
+      await peer.setRemoteDescription(new RTCSessionDescription(signal.payload));
+      setStatus("Audio remoto conectado.");
+    }
+    return;
+  }
+  if (signal.type === "ice-candidate" && signal.payload?.candidate) {
+    await peer.addIceCandidate(new RTCIceCandidate(signal.payload));
+    return;
+  }
+  if (signal.type === "hangup") {
+    await teardownRtcCall(false);
+    activeCall = null;
+    saveCallState();
+    ensureCallTicker();
+    renderFriends();
+    renderChat();
+    setStatus(signal.payload?.reason === "rejected" ? "Tu amigo rechazo la llamada." : "La llamada fue finalizada por tu amigo.");
+  }
+}
+
+async function pollCallSignals() {
+  if (!chatBackendEnabled || !activeCall?.sessionId || !activeCall?.friendId) return;
+  const signals = await window.papu.fetchRemoteChatCallSignals({
+    sessionId: activeCall.sessionId,
+    friendId: activeCall.friendId,
+    afterId: callSignalCursor
+  });
+  for (const signal of signals) {
+    callSignalCursor = Math.max(callSignalCursor, Number(signal.id || 0));
+    if (signal.fromId === normalizeModKey(currentUser?.name || "")) continue;
+    await handleIncomingCallSignal(signal);
+  }
+}
+
+function startCallSignalPolling() {
+  if (callSignalPollerId) window.clearInterval(callSignalPollerId);
+  if (!activeCall?.sessionId) {
+    callSignalPollerId = 0;
+    return;
+  }
+  callSignalPollerId = window.setInterval(() => {
+    pollCallSignals().catch((error) => setStatus(`Error sincronizando llamada: ${error.message || String(error)}`));
+  }, 1200);
+}
+
+async function teardownRtcCall(sendHangup = false) {
+  if (sendHangup && activeCall?.sessionId) {
+    await sendCallSignal("hangup", {}).catch(() => {});
+  }
+  if (callSignalPollerId) {
+    window.clearInterval(callSignalPollerId);
+    callSignalPollerId = 0;
+  }
+  callOfferSent = false;
+  callSignalCursor = 0;
+  if (callPeerConnection) {
+    callPeerConnection.onicecandidate = null;
+    callPeerConnection.ontrack = null;
+    callPeerConnection.close();
+    callPeerConnection = null;
+  }
+  stopCallStream(localCallStream);
+  localCallStream = null;
+  stopCallStream(remoteCallStream);
+  remoteCallStream = null;
+  if (remoteCallAudioEl) {
+    remoteCallAudioEl.srcObject = null;
+  }
+  syncIncomingCallRingtone();
+  updateCallControlsUI();
+}
+
+async function syncRtcState() {
+  if (!activeCall?.sessionId) {
+    await teardownRtcCall(false);
+    return;
+  }
+  updateCallControlsUI();
+  startCallSignalPolling();
+  await ensureCallConnection();
+  await pollCallSignals();
 }
 
 function saveConversationState(map) {
@@ -292,7 +616,7 @@ function playToastSound(kind = "message") {
   }
 }
 
-function pushToast({ title, body, kind = "message", dedupeKey = "" }) {
+function pushToast({ title, body, kind = "message", dedupeKey = "", avatarUrl = "" }) {
   if (!toastStackEl || !title || !body) return;
   if (dedupeKey) {
     if (seenToastKeys.has(dedupeKey)) return;
@@ -302,11 +626,16 @@ function pushToast({ title, body, kind = "message", dedupeKey = "" }) {
   const toast = document.createElement("article");
   toast.className = `toast-card ${kind}`;
   toast.innerHTML = `
-    <div class="toast-topline">
-      <strong class="toast-title">${escapeHtml(title)}</strong>
-      <span class="toast-time">${new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+    <div class="toast-main">
+      ${avatarUrl ? `<img class="toast-avatar" src="${escapeHtml(avatarUrl)}" alt="" />` : ""}
+      <div>
+        <div class="toast-topline">
+          <strong class="toast-title">${escapeHtml(title)}</strong>
+          <span class="toast-time">${new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+        </div>
+        <div class="toast-body">${escapeHtml(body)}</div>
+      </div>
     </div>
-    <div class="toast-body">${escapeHtml(body)}</div>
   `;
   toastStackEl.prepend(toast);
   playToastSound(kind);
@@ -321,6 +650,10 @@ function getMessageToastKey(friendId, message) {
   return [friendId, message?.author, message?.time, message?.text].map((value) => String(value || "")).join("|");
 }
 
+function getRequestToastKey(request) {
+  return [request?.direction, request?.id, request?.name].map((value) => String(value || "")).join("|");
+}
+
 function notifyIncomingMessages(friend, previousMessages, nextMessages) {
   if (!friend || !Array.isArray(nextMessages)) return;
   const knownKeys = new Set((previousMessages || []).map((message) => getMessageToastKey(friend.id, message)));
@@ -332,8 +665,53 @@ function notifyIncomingMessages(friend, previousMessages, nextMessages) {
       title: friend.name,
       body: message.text || "Tienes un mensaje nuevo.",
       kind: "message",
-      dedupeKey: `message:${key}`
+      dedupeKey: `message:${key}`,
+      avatarUrl: friend.avatarUrl || `https://mc-heads.net/avatar/${encodeURIComponent(friend.name)}/64`
     });
+  }
+}
+
+function notifyFriendRequestChanges(previousRequests, nextRequests, previousFriends, nextFriends) {
+  const previousRequestMap = new Map((previousRequests || []).map((request) => [getRequestToastKey(request), request]));
+  const nextRequestMap = new Map((nextRequests || []).map((request) => [getRequestToastKey(request), request]));
+  const nextFriendIds = new Set((nextFriends || []).map((friend) => friend.id));
+
+  for (const request of nextRequests || []) {
+    const key = getRequestToastKey(request);
+    if (previousRequestMap.has(key)) continue;
+    if (request.direction === "incoming") {
+      pushToast({
+        title: "Solicitud de amistad",
+        body: `${request.name} quiere agregarte en PapuClient.`,
+        kind: "friend",
+        dedupeKey: `request-in:${key}`,
+        avatarUrl: request.avatarUrl
+      });
+    }
+  }
+
+  for (const request of previousRequests || []) {
+    const key = getRequestToastKey(request);
+    if (nextRequestMap.has(key)) continue;
+    if (request.direction === "outgoing") {
+      if (nextFriendIds.has(request.id)) {
+        pushToast({
+          title: "Solicitud aceptada",
+          body: `${request.name} acepto tu solicitud. Ya pueden chatear.`,
+          kind: "friend",
+          dedupeKey: `request-accepted:${key}`,
+          avatarUrl: request.avatarUrl
+        });
+      } else {
+        pushToast({
+          title: "Solicitud rechazada",
+          body: `${request.name} rechazo tu solicitud.`,
+          kind: "friend",
+          dedupeKey: `request-rejected:${key}`,
+          avatarUrl: request.avatarUrl
+        });
+      }
+    }
   }
 }
 
@@ -602,7 +980,7 @@ function renderFriends() {
     item.className = `friend-card ${friend.status}`;
     if (friend.id === selectedFriendId) item.classList.add("active");
     item.innerHTML = `
-      <span class="friend-avatar">${friend.name.slice(0, 1)}</span>
+      <img class="friend-avatar" src="${escapeHtml(friend.avatarUrl || `https://mc-heads.net/avatar/${encodeURIComponent(friend.name)}/64`)}" alt="" />
       <span class="friend-copy">
         <strong>${friend.name}</strong>
         <span>${friend.state}</span>
@@ -625,19 +1003,71 @@ function renderFriends() {
   if (onlineFriendsCountEl) onlineFriendsCountEl.textContent = String(friends.filter((friend) => friend.status === "online").length);
 }
 
+function renderFriendRequests() {
+  if (!friendRequestsListEl || !friendRequestsPanelEl || !friendRequestsCountEl) return;
+  friendRequestsCountEl.textContent = String(friendRequests.length);
+  friendRequestsListEl.innerHTML = "";
+
+  if (!friendRequests.length) {
+    friendRequestsListEl.innerHTML = `
+      <div class="friend-requests-empty">
+        <div>
+          <strong>Sin solicitudes</strong>
+          <span>Cuando alguien te agregue, su head y las acciones para aceptar o rechazar apareceran aqui.</span>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  for (const request of friendRequests) {
+    const item = document.createElement("article");
+    item.className = `friend-request-card ${request.direction}`;
+    item.innerHTML = `
+      <img class="friend-request-avatar" src="${escapeHtml(request.avatarUrl)}" alt="" />
+      <div class="friend-request-copy">
+        <strong>${escapeHtml(request.name)}</strong>
+        <span class="friend-request-direction">${request.direction === "incoming" ? "Recibida" : "Enviada"}</span>
+        <span>${escapeHtml(getRequestLabel(request))}</span>
+        ${request.direction === "incoming" ? `
+          <div class="friend-request-actions">
+            <button class="friend-request-btn accept" data-request-action="accept" data-request-id="${escapeHtml(request.id)}">Aceptar</button>
+            <button class="friend-request-btn" data-request-action="reject" data-request-id="${escapeHtml(request.id)}">Rechazar</button>
+          </div>
+        ` : ""}
+      </div>
+    `;
+    friendRequestsListEl.appendChild(item);
+  }
+}
+
 function renderChat() {
   const friend = friends.find((entry) => entry.id === selectedFriendId) ?? friends[0];
-  if (!friend) return;
+  if (!friend) {
+    chatFriendNameEl.textContent = "Selecciona un amigo";
+    chatFriendStateEl.textContent = friendRequests.length ? "Tienes solicitudes pendientes" : "Sin conversacion activa";
+    chatThreadEl.innerHTML = `<div class="mods-empty-state">Acepta una solicitud o agrega un amigo para empezar a chatear.</div>`;
+    if (chatInputEl) chatInputEl.disabled = true;
+    if (chatCallBtn) {
+      chatCallBtn.classList.remove("active-call");
+      chatCallBtn.disabled = true;
+      chatCallBtn.title = "Selecciona un amigo para llamar";
+    }
+    updateCallControlsUI();
+    return;
+  }
   const conversationMap = getConversationState();
   const messages = conversationMap[friend.id] ?? [];
+  if (chatInputEl) chatInputEl.disabled = false;
 
   chatFriendNameEl.textContent = friend.name;
   chatFriendStateEl.textContent = getCallLabel(friend) || friend.state;
-  chatFriendAvatarEl.src = `https://mc-heads.net/avatar/${friend.name}/48`;
+  chatFriendAvatarEl.src = friend.avatarUrl || `https://mc-heads.net/avatar/${friend.name}/48`;
   if (chatCallBtn) {
     const inCall = activeCall?.friendId === friend.id;
     chatCallBtn.classList.toggle("active-call", inCall);
-    chatCallBtn.title = inCall ? "Finalizar llamada" : "Llamar";
+    chatCallBtn.disabled = false;
+    chatCallBtn.title = inCall ? "Finalizar llamada de voz" : "Llamar";
   }
   chatThreadEl.innerHTML = "";
 
@@ -649,6 +1079,7 @@ function renderChat() {
   }
 
   chatThreadEl.scrollTop = chatThreadEl.scrollHeight;
+  updateCallControlsUI();
 }
 
 function appendMessage(friendId, message) {
@@ -684,17 +1115,22 @@ function sendChatMessage(text) {
       title: friend.name,
       body: reply.text,
       kind: "message",
-      dedupeKey: `message:${getMessageToastKey(friend.id, reply)}`
+      dedupeKey: `message:${getMessageToastKey(friend.id, reply)}`,
+      avatarUrl: friend.avatarUrl || `https://mc-heads.net/avatar/${encodeURIComponent(friend.name)}/64`
     });
     renderFriends();
     renderChat();
   }, 900);
 }
 
-function promptFriendAccount() {
-  const name = window.prompt("Ingresa la cuenta del amigo");
-  if (!name) return;
-  addFriendByAccount(name);
+function toggleFriendAddPanel(forceOpen = false) {
+  if (!friendAddFormEl) return;
+  const willOpen = forceOpen || friendAddFormEl.classList.contains("hidden");
+  friendAddFormEl.classList.toggle("hidden", !willOpen);
+  if (willOpen && friendAddInputEl instanceof HTMLInputElement) {
+    friendAddInputEl.value = "";
+    friendAddInputEl.focus();
+  }
 }
 
 function addFriendByAccount(rawName) {
@@ -706,12 +1142,14 @@ function addFriendByAccount(rawName) {
     window.papu.addRemoteChatFriend({ accountName: name })
       .then(() => syncChatIfNeeded(selectedFriendId))
       .then(() => {
-        setStatus(`Cuenta agregada: ${name}.`);
+        if (friendAddFormEl) friendAddFormEl.classList.add("hidden");
+        setStatus(`Solicitud enviada a ${name}.`);
         pushToast({
-          title: "Amigo agregado",
-          body: `${name} ya puede aparecer en tus chats si usa el mismo backend.`,
+          title: "Solicitud enviada",
+          body: `${name} podra aceptarte o rechazarte.`,
           kind: "friend",
-          dedupeKey: `friend:${id}`
+          dedupeKey: `friend:${id}`,
+          avatarUrl: `https://mc-heads.net/avatar/${encodeURIComponent(name)}/64`
         });
       })
       .catch((error) => setStatus(`Error agregando amigo: ${error.message || String(error)}`));
@@ -735,6 +1173,7 @@ function addFriendByAccount(rawName) {
   selectedFriendId = id;
   renderFriends();
   renderChat();
+  if (friendAddFormEl) friendAddFormEl.classList.add("hidden");
   setStatus(`Cuenta agregada: ${name}.`);
   pushToast({
     title: "Amigo agregado",
@@ -754,6 +1193,9 @@ function formatCallDuration(startedAt) {
 
 function getCallLabel(friend) {
   if (!activeCall || activeCall.friendId !== friend.id) return "";
+  if (activeCall.status === "ringing") {
+    return activeCall.isCaller ? "Llamando..." : "Llamada entrante";
+  }
   return `En llamada • ${formatCallDuration(activeCall.startedAt)}`;
 }
 
@@ -774,14 +1216,22 @@ function toggleCall() {
   const friend = friends.find((entry) => entry.id === selectedFriendId);
   if (!friend) return setStatus("Selecciona un amigo para llamar.");
   if (chatBackendEnabled) {
+    const previousCall = activeCall;
     window.papu.toggleRemoteChatCall({ friendId: friend.id })
-      .then((state) => {
+      .then(async (state) => {
         activeCall = state;
         saveCallState();
         ensureCallTicker();
+        if (!state && previousCall?.sessionId) {
+          await teardownRtcCall(true);
+        } else {
+          callSignalCursor = 0;
+          callOfferSent = false;
+          await syncRtcState();
+        }
         renderFriends();
         renderChat();
-        setStatus(state ? `Llamando a ${friend.name}...` : `Llamada finalizada con ${friend.name}.`);
+        setStatus(state ? (state.status === "ringing" ? `Llamando a ${friend.name}...` : `Llamada conectada con ${friend.name}.`) : `Llamada finalizada con ${friend.name}.`);
       })
       .catch((error) => setStatus(`Error en llamada: ${error.message || String(error)}`));
     return;
@@ -795,7 +1245,7 @@ function toggleCall() {
     return setStatus(`Llamada finalizada con ${friend.name}.`);
   }
 
-  activeCall = { friendId: friend.id, startedAt: Date.now() };
+  activeCall = { sessionId: "local", friendId: friend.id, startedAt: Date.now(), isCaller: true, status: "active" };
   saveCallState();
   ensureCallTicker();
   renderFriends();
@@ -806,23 +1256,32 @@ function toggleCall() {
 async function syncChatIfNeeded(friendId = selectedFriendId) {
   if (!chatBackendEnabled) return;
   const previousFriendIds = new Set(friends.map((friend) => friend.id));
+  const previousRequests = [...friendRequests];
+  const previousFriends = [...friends];
   const previousMessages = friendId ? (getConversationState()[friendId] ?? []) : [];
   const state = await window.papu.syncRemoteChat({ selectedFriendId: friendId || "" });
   if (!state?.enabled) return;
   friends = state.friends;
+  friendRequests = Array.isArray(state.requests) ? state.requests : [];
   saveFriendsState();
   activeCall = state.activeCall;
+  normalizeActiveCallState();
   saveCallState();
+  if (activeCall?.friendId) {
+    selectedFriendId = activeCall.friendId;
+  }
   for (const friend of friends) {
     if (!previousFriendIds.has(friend.id)) {
       pushToast({
         title: "Nuevo amigo",
         body: `${friend.name} aparece ahora en tu red de PapuClient.`,
         kind: "friend",
-        dedupeKey: `friend-sync:${friend.id}`
+        dedupeKey: `friend-sync:${friend.id}`,
+        avatarUrl: friend.avatarUrl
       });
     }
   }
+  notifyFriendRequestChanges(previousRequests, friendRequests, previousFriends, friends);
   if (friendId) {
     const friend = friends.find((entry) => entry.id === friendId);
     notifyIncomingMessages(friend, previousMessages, state.messages || []);
@@ -830,9 +1289,37 @@ async function syncChatIfNeeded(friendId = selectedFriendId) {
   }
   if ((!selectedFriendId || !friends.some((friend) => friend.id === selectedFriendId)) && friends[0]) {
     selectedFriendId = friends[0].id;
+  } else if (!friends.length) {
+    selectedFriendId = "";
   }
+  renderFriendRequests();
   renderFriends();
   renderChat();
+  syncRtcState().catch((error) => setStatus(`Error de voz: ${error.message || String(error)}`));
+}
+
+function respondIncomingCall(action) {
+  const friend = friends.find((entry) => entry.id === activeCall?.friendId);
+  if (!chatBackendEnabled || !activeCall?.friendId) return;
+  window.papu.respondRemoteChatCall({ friendId: activeCall.friendId, action })
+    .then(async (state) => {
+      activeCall = state;
+      saveCallState();
+      ensureCallTicker();
+      if (!state) {
+        await teardownRtcCall(false);
+        setStatus(`Rechazaste la llamada de ${friend?.name || "tu amigo"}.`);
+      } else {
+        callOfferSent = false;
+        callSignalCursor = 0;
+        await syncRtcState();
+        setStatus(`Aceptaste la llamada de ${friend?.name || "tu amigo"}.`);
+      }
+      renderFriends();
+      renderChat();
+      syncIncomingCallRingtone();
+    })
+    .catch((error) => setStatus(`Error respondiendo llamada: ${error.message || String(error)}`));
 }
 
 function getInstalledCount() {
@@ -1119,6 +1606,7 @@ async function launchCurrent() {
 async function bootstrap() {
   try {
     setStatus("Cargando launcher...");
+    await refreshCallDeviceSelectors();
     if (!removeUpdateListener && typeof window.papu.onUpdateState === "function") {
       removeUpdateListener = window.papu.onUpdateState(handleUpdateState);
     }
@@ -1150,7 +1638,17 @@ async function bootstrap() {
     updateAuthUI();
     const chatStatus = await window.papu.getChatBackendStatus();
     chatBackendEnabled = Boolean(chatStatus?.enabled);
+    if (chatBackendEnabled) {
+      friends = [];
+      friendRequests = [];
+      activeCall = null;
+      selectedFriendId = "";
+      saveFriendsState();
+      saveCallState();
+    }
+    normalizeActiveCallState();
     renderFriends();
+    renderFriendRequests();
     renderChat();
     ensureCallTicker();
     if (chatBackendEnabled) {
@@ -1198,9 +1696,55 @@ if (accountSettingsBtn) accountSettingsBtn.addEventListener("click", () => { set
 if (accountLogoutBtn) accountLogoutBtn.addEventListener("click", () => { setAccountMenuOpen(false); handleLoginAction(); });
 if (sidebarSettingsBtn) sidebarSettingsBtn.addEventListener("click", () => setStatus("La configuracion avanzada aun no esta disponible."));
 if (friendsSearchEl) friendsSearchEl.addEventListener("input", renderFriends);
-if (addFriendBtn) addFriendBtn.addEventListener("click", promptFriendAccount);
-if (socialQuickAddBtn) socialQuickAddBtn.addEventListener("click", promptFriendAccount);
+if (addFriendBtn) addFriendBtn.addEventListener("click", () => toggleFriendAddPanel());
+if (socialQuickAddBtn) socialQuickAddBtn.addEventListener("click", () => toggleFriendAddPanel(true));
+if (friendAddFormEl) friendAddFormEl.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!(friendAddInputEl instanceof HTMLInputElement) || !friendAddInputEl.value.trim()) return;
+  addFriendByAccount(friendAddInputEl.value);
+});
+if (friendRequestsListEl) friendRequestsListEl.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-request-action]");
+  if (!(button instanceof HTMLElement) || !chatBackendEnabled) return;
+  const friendId = button.dataset.requestId;
+  const action = button.dataset.requestAction;
+  if (!friendId || (action !== "accept" && action !== "reject")) return;
+  window.papu.respondRemoteChatFriendRequest({ friendId, action })
+    .then(() => syncChatIfNeeded(selectedFriendId))
+    .then(() => {
+      const request = friendRequests.find((entry) => entry.id === friendId);
+      setStatus(action === "accept" ? `Aceptaste a ${request?.name || friendId}.` : `Rechazaste la solicitud.`);
+      pushToast({
+        title: action === "accept" ? "Solicitud aceptada" : "Solicitud rechazada",
+        body: action === "accept" ? `${request?.name || friendId} ya puede chatear contigo.` : `La solicitud fue rechazada.`,
+        kind: "friend",
+        dedupeKey: `request:${action}:${friendId}:${Date.now()}`
+      });
+    })
+    .catch((error) => setStatus(`Error respondiendo solicitud: ${error.message || String(error)}`));
+});
 if (chatCallBtn) chatCallBtn.addEventListener("click", toggleCall);
+if (incomingCallAcceptBtn) incomingCallAcceptBtn.addEventListener("click", () => respondIncomingCall("accept"));
+if (incomingCallRejectBtn) incomingCallRejectBtn.addEventListener("click", () => respondIncomingCall("reject"));
+if (callMuteBtn) callMuteBtn.addEventListener("click", () => {
+  callDevices.muted = !callDevices.muted;
+  for (const track of localCallStream?.getAudioTracks?.() || []) {
+    track.enabled = !callDevices.muted;
+  }
+  updateCallControlsUI();
+});
+if (callInputSelectEl instanceof HTMLSelectElement) callInputSelectEl.addEventListener("change", () => {
+  callDevices.inputId = callInputSelectEl.value || "default";
+  recreateLocalAudioTrack().catch((error) => setStatus(`No se pudo cambiar el microfono: ${error.message || String(error)}`));
+});
+if (callOutputSelectEl instanceof HTMLSelectElement) callOutputSelectEl.addEventListener("change", () => {
+  callDevices.outputId = callOutputSelectEl.value || "default";
+  setRemoteAudioSink();
+});
+if (callVolumeRangeEl instanceof HTMLInputElement) callVolumeRangeEl.addEventListener("input", () => {
+  callDevices.volume = Number(callVolumeRangeEl.value || 100);
+  setRemoteAudioSink();
+});
 if (chatFormEl) chatFormEl.addEventListener("submit", (event) => { event.preventDefault(); if (!chatInputEl.value.trim()) return; sendChatMessage(chatInputEl.value); chatInputEl.value = ""; });
 if (modsGridEl) modsGridEl.addEventListener("click", async (event) => {
   const viewButton = event.target.closest("[data-view-mod]");

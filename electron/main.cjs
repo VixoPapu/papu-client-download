@@ -319,6 +319,11 @@ ipcMain.handle("papu:chat:addFriend", async (_event, input) => {
   return service.addRemoteChatFriend(input);
 });
 
+ipcMain.handle("papu:chat:respondFriendRequest", async (_event, input) => {
+  const service = await loadService();
+  return service.respondRemoteChatFriendRequest(input);
+});
+
 ipcMain.handle("papu:chat:sendMessage", async (_event, input) => {
   const service = await loadService();
   return service.sendRemoteChatMessage(input);
@@ -327,6 +332,21 @@ ipcMain.handle("papu:chat:sendMessage", async (_event, input) => {
 ipcMain.handle("papu:chat:toggleCall", async (_event, input) => {
   const service = await loadService();
   return service.toggleRemoteChatCall(input);
+});
+
+ipcMain.handle("papu:chat:fetchCallSignals", async (_event, input) => {
+  const service = await loadService();
+  return service.fetchRemoteChatCallSignals(input);
+});
+
+ipcMain.handle("papu:chat:sendCallSignal", async (_event, input) => {
+  const service = await loadService();
+  return service.sendRemoteChatCallSignal(input);
+});
+
+ipcMain.handle("papu:chat:respondCall", async (_event, input) => {
+  const service = await loadService();
+  return service.respondRemoteChatCall(input);
 });
 
 ipcMain.handle("papu:launch", async (_event, payload) => {

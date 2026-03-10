@@ -14,8 +14,12 @@ contextBridge.exposeInMainWorld("papu", {
   getChatBackendStatus: () => ipcRenderer.invoke("papu:chat:getStatus"),
   syncRemoteChat: (input) => ipcRenderer.invoke("papu:chat:sync", input),
   addRemoteChatFriend: (input) => ipcRenderer.invoke("papu:chat:addFriend", input),
+  respondRemoteChatFriendRequest: (input) => ipcRenderer.invoke("papu:chat:respondFriendRequest", input),
   sendRemoteChatMessage: (input) => ipcRenderer.invoke("papu:chat:sendMessage", input),
   toggleRemoteChatCall: (input) => ipcRenderer.invoke("papu:chat:toggleCall", input),
+  fetchRemoteChatCallSignals: (input) => ipcRenderer.invoke("papu:chat:fetchCallSignals", input),
+  sendRemoteChatCallSignal: (input) => ipcRenderer.invoke("papu:chat:sendCallSignal", input),
+  respondRemoteChatCall: (input) => ipcRenderer.invoke("papu:chat:respondCall", input),
   getUpdateState: () => ipcRenderer.invoke("papu:update:getState"),
   checkForUpdates: () => ipcRenderer.invoke("papu:update:checkNow"),
   onUpdateState: (handler) => {

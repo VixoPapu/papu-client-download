@@ -251,6 +251,19 @@
 
             <section class="section chat-view hidden" id="chatView">
               <div class="chat-page-shell">
+                <aside class="friends-panel chat-requests-column">
+                  <div class="chat-column-head">
+                    <div>
+                      <span class="panel-kicker">Network</span>
+                      <h3>Solicitudes</h3>
+                    </div>
+                    <span class="chat-column-count" id="friendRequestsCount">0</span>
+                  </div>
+                  <section class="friend-requests-panel" id="friendRequestsPanel">
+                    <div class="friend-requests-list" id="friendRequestsList"></div>
+                  </section>
+                </aside>
+
                 <aside class="friends-panel chat-directory">
                   <div class="social-dock-head">
                     <div>
@@ -269,6 +282,10 @@
                   <div class="friends-toolbar dock">
                     <input id="friendsSearch" class="social-search" placeholder="Buscar amigo..." />
                   </div>
+                  <form class="friend-add-inline hidden" id="friendAddForm">
+                    <input id="friendAddInput" class="social-search" placeholder="Cuenta de tu amigo..." />
+                    <button class="chat-send friend-add-submit" type="submit">Agregar</button>
+                  </form>
                   <div class="friends-list" id="friendsList"></div>
                 </aside>
 
@@ -285,11 +302,49 @@
                       <img src="../images/icons/call_icon.png" alt="" />
                     </button>
                   </div>
+                  <div class="chat-call-zone">
+                    <div class="incoming-call-bar hidden" id="incomingCallBar">
+                      <div class="incoming-call-copy">
+                        <strong id="incomingCallTitle">Llamada entrante</strong>
+                        <span id="incomingCallSubtitle">Tu amigo quiere hablar contigo.</span>
+                      </div>
+                      <div class="incoming-call-actions">
+                        <button class="friend-request-btn accept" id="incomingCallAcceptBtn" type="button">Aceptar</button>
+                        <button class="friend-request-btn" id="incomingCallRejectBtn" type="button">Rechazar</button>
+                      </div>
+                    </div>
+                    <div class="call-controls hidden" id="callControls">
+                      <div class="call-presence">
+                        <div class="call-presence-avatars">
+                          <img id="callSelfAvatar" class="call-presence-avatar self" src="../images/icons/grass_block.png" alt="" />
+                          <img id="callFriendPresenceAvatar" class="call-presence-avatar friend" src="../images/icons/grass_block.png" alt="" />
+                        </div>
+                        <div class="call-presence-copy">
+                          <strong id="callPresenceTitle">Llamada activa</strong>
+                          <span id="callPresenceSubtitle">Tu audio y el de tu amigo se estan conectando.</span>
+                        </div>
+                      </div>
+                      <button class="call-control-btn" id="callMuteBtn" type="button">Mutear</button>
+                      <label class="call-control-field">
+                        <span>Entrada</span>
+                        <select id="callInputSelect"></select>
+                      </label>
+                      <label class="call-control-field">
+                        <span>Salida</span>
+                        <select id="callOutputSelect"></select>
+                      </label>
+                      <label class="call-control-field volume">
+                        <span>Volumen</span>
+                        <input id="callVolumeRange" type="range" min="0" max="100" value="100" />
+                      </label>
+                    </div>
+                  </div>
                   <div class="chat-thread" id="chatThread"></div>
                   <form class="chat-compose" id="chatForm">
                     <input id="chatInput" class="chat-input" placeholder="Escribe un mensaje..." />
                     <button class="chat-send" type="submit">Enviar</button>
                   </form>
+                  <audio id="remoteCallAudio" autoplay></audio>
                 </section>
               </div>
             </section>
