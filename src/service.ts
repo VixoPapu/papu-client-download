@@ -239,7 +239,7 @@ export async function startLaunch(input: {
   gameVersion: string;
   loaderVersion: string;
   memoryMb: number;
-}): Promise<void> {
+}, report?: (message: string) => void): Promise<void> {
   if (!currentAuth) {
     throw new Error("Debes iniciar sesion primero.");
   }
@@ -259,7 +259,7 @@ export async function startLaunch(input: {
     gameVersion: input.gameVersion,
     fabricLoaderVersion: finalLoaderVersion,
     memoryMb: input.memoryMb
-  });
+  }, report);
 }
 
 export async function getChatBackendStatus() {

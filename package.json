@@ -1,6 +1,6 @@
 {
   "name": "papuclient",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
@@ -52,6 +52,20 @@
       {
         "from": "chat.config.json",
         "to": "chat.config.json",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "bundled-mods",
+        "to": "bundled-mods",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "config",
+        "to": "config",
         "filter": [
           "**/*"
         ]

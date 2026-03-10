@@ -1,6 +1,7 @@
 node_modules/
 dist/
 release/
+artifacts/
 .papuclient/
 papu-branding-mod/.gradle/
 papu-branding-mod/build/

@@ -23,6 +23,11 @@ contextBridge.exposeInMainWorld("papu", {
     ipcRenderer.on("papu:update:event", listener);
     return () => ipcRenderer.removeListener("papu:update:event", listener);
   },
+  onLaunchProgress: (handler) => {
+    const listener = (_event, payload) => handler(payload);
+    ipcRenderer.on("papu:launch:progress", listener);
+    return () => ipcRenderer.removeListener("papu:launch:progress", listener);
+  },
   launch: (payload) => ipcRenderer.invoke("papu:launch", payload),
   openExternal: (url) => ipcRenderer.invoke("papu:openExternal", url),
   windowMinimize: () => ipcRenderer.invoke("papu:window:minimize"),

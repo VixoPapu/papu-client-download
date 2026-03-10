@@ -15,19 +15,23 @@ let updateState = {
 };
 let updaterReady = false;
 
+function getAppRoot() {
+  return app.isPackaged ? app.getAppPath() : path.resolve(__dirname, "..");
+}
+
 async function loadService() {
-  const servicePath = path.resolve(app.getAppPath(), "dist", "service.js");
+  const servicePath = path.resolve(getAppRoot(), "dist", "service.js");
   return import(pathToFileURL(servicePath).href);
 }
 
 function getRuntimeRoot() {
-  return app.getAppPath();
+  return getAppRoot();
 }
 
 function configureRuntimeEnv() {
-  process.env.PAPUCLIENT_APP_ROOT = app.getAppPath();
+  process.env.PAPUCLIENT_APP_ROOT = getAppRoot();
   process.env.PAPUCLIENT_DATA_DIR = path.join(app.getPath("appData"), "PapuClient");
-  process.env.PAPUCLIENT_EXTRA_ROOT = app.isPackaged ? process.resourcesPath : app.getAppPath();
+  process.env.PAPUCLIENT_EXTRA_ROOT = app.isPackaged ? process.resourcesPath : getAppRoot();
 }
 
 function broadcastUpdateState() {
@@ -327,7 +331,10 @@ ipcMain.handle("papu:chat:toggleCall", async (_event, input) => {
 
 ipcMain.handle("papu:launch", async (_event, payload) => {
   const service = await loadService();
-  await service.startLaunch(payload);
+  const sender = _event.sender;
+  await service.startLaunch(payload, (message) => {
+    sender.send("papu:launch:progress", { message });
+  });
   return { ok: true };
 });
 

@@ -82,11 +82,13 @@ let remoteMods = [];
 let remoteModsTotal = 0;
 let modsLoading = false;
 let instanceRunning = false;
+let launchPhase = "idle";
 let chatBackendEnabled = false;
 let chatSyncTimerId = 0;
 const seenToastKeys = new Set();
 const remoteModsCache = new Map();
 let removeUpdateListener = null;
+let removeLaunchListener = null;
 
 const palettes = [["#7f3fa8", "#2a1d3f"], ["#8f386f", "#321931"], ["#6f4ac2", "#2b1f57"], ["#aa2b7b", "#3b1741"], ["#3a45af", "#1a214d"], ["#8231a7", "#2d1b4d"]];
 const MODS_PER_PAGE = 8;
@@ -477,12 +479,16 @@ function syncMemoryControls(source) {
 }
 
 function updateLaunchState() {
-  const label = instanceRunning ? "EJECUTANDO" : "JUGAR";
+  const label = instanceRunning ? "EJECUTANDO" : (launchPhase === "installing" ? "INSTALANDO" : "JUGAR");
   playBtn.textContent = label;
   playBtnTop.textContent = label;
+  playBtn.classList.toggle("installing", launchPhase === "installing");
+  playBtnTop.classList.toggle("installing", launchPhase === "installing");
   playBtn.classList.toggle("running", instanceRunning);
   playBtnTop.classList.toggle("running", instanceRunning);
-  if (instancePillEl) instancePillEl.textContent = instanceRunning ? "Ejecutando" : "0 Instancias activas";
+  if (instancePillEl) {
+    instancePillEl.textContent = instanceRunning ? "Ejecutando" : (launchPhase === "installing" ? "Instalando archivos" : "0 Instancias activas");
+  }
 }
 
 function setAccountMenuOpen(isOpen) {
@@ -1093,14 +1099,17 @@ async function launchCurrent() {
   if (!selectedLoaderVersion) return setStatus("No hay loader Fabric compatible para esta version.");
   if (instanceRunning) return setStatus("Ya hay una instancia ejecutandose.");
   const payload = { gameVersion: selectedGameVersion, loaderVersion: selectedLoaderVersion, memoryMb: Number.parseInt(memoryMbEl.value, 10) };
+  launchPhase = "installing";
   setBusy(true);
-  setStatus(`Preparando ${payload.gameVersion} + Fabric ${payload.loaderVersion}...`);
+  setStatus(`Preparando ${payload.gameVersion} + Fabric ${payload.loaderVersion}. La primera vez puede tardar...`);
   try {
     await window.papu.launch(payload);
     instanceRunning = true;
+    launchPhase = "running";
     updateLaunchState();
     setStatus("Minecraft lanzado.");
   } catch (error) {
+    launchPhase = "idle";
     setStatus(`Error al lanzar: ${error.message || String(error)}`);
   } finally {
     setBusy(false);
@@ -1115,6 +1124,15 @@ async function bootstrap() {
     }
     if (typeof window.papu.getUpdateState === "function") {
       handleUpdateState(await window.papu.getUpdateState());
+    }
+    if (!removeLaunchListener && typeof window.papu.onLaunchProgress === "function") {
+      removeLaunchListener = window.papu.onLaunchProgress((payload) => {
+        if (payload?.message) {
+          launchPhase = instanceRunning ? "running" : "installing";
+          updateLaunchState();
+          setStatus(payload.message);
+        }
+      });
     }
     const [games, detectedUser] = await Promise.all([window.papu.listGames(), window.papu.getUser()]);
     gameVersions = games;

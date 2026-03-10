@@ -1,7 +1,7 @@
 ﻿import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { getAppRoot } from "./paths.js";
+import { getExtraRoot } from "./paths.js";
 
 type RequiredMod = {
   id: string;
@@ -21,9 +21,9 @@ type SyncInput = {
   instanceDir: string;
 };
 
-const APP_ROOT = getAppRoot();
-const CONFIG_PATH = path.join(APP_ROOT, "config", "modpacks.json");
-const BUNDLED_MODS_DIR = path.join(APP_ROOT, "bundled-mods");
+const EXTRA_ROOT = getExtraRoot();
+const CONFIG_PATH = path.join(EXTRA_ROOT, "config", "modpacks.json");
+const BUNDLED_MODS_DIR = path.join(EXTRA_ROOT, "bundled-mods");
 
 function versionBranch(gameVersion: string): string | null {
   const m = gameVersion.match(/^(\d+)\.(\d+)/);
@@ -49,7 +49,7 @@ async function collectBundledMods(gameVersion: string): Promise<RequiredMod[]> {
     const entries = await fs.readdir(folder, { withFileTypes: true });
     for (const e of entries) {
       if (!e.isFile() || !e.name.toLowerCase().endsWith(".jar")) continue;
-      const relPath = path.relative(APP_ROOT, path.join(folder, e.name)).replaceAll("\\", "/");
+      const relPath = path.relative(EXTRA_ROOT, path.join(folder, e.name)).replaceAll("\\", "/");
       modsByFile.set(e.name, {
         id: e.name.replace(/\.jar$/i, ""),
         fileName: e.name,
@@ -96,7 +96,7 @@ async function downloadToFile(url: string, targetPath: string): Promise<void> {
 
 async function installMod(mod: RequiredMod, targetPath: string): Promise<void> {
   if (mod.localPath) {
-    const sourcePath = path.resolve(APP_ROOT, mod.localPath);
+    const sourcePath = path.resolve(EXTRA_ROOT, mod.localPath);
     const exists = await fileExists(sourcePath);
     if (!exists) {
       throw new Error(`No existe el mod local ${mod.id}: ${sourcePath}`);

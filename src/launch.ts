@@ -11,9 +11,12 @@ export type LaunchConfig = {
   memoryMb: number;
 };
 
-async function ensureFabricVersionJson(root: string, gameVersion: string, fabricLoaderVersion: string): Promise<string> {
+type LaunchProgressReporter = (message: string) => void;
+
+async function ensureFabricVersionJson(root: string, gameVersion: string, fabricLoaderVersion: string, report?: LaunchProgressReporter): Promise<string> {
   const versionId = `fabric-loader-${fabricLoaderVersion}-${gameVersion}`;
   const profileUrl = `https://meta.fabricmc.net/v2/versions/loader/${gameVersion}/${fabricLoaderVersion}/profile/json`;
+  report?.(`Descargando perfil de Fabric ${fabricLoaderVersion} para ${gameVersion}...`);
   const response = await fetch(profileUrl);
 
   if (!response.ok) {
@@ -26,22 +29,38 @@ async function ensureFabricVersionJson(root: string, gameVersion: string, fabric
 
   await fs.mkdir(versionDir, { recursive: true });
   await fs.writeFile(versionJsonPath, profileText, "utf8");
+  report?.("Perfil de Fabric listo.");
 
   return versionId;
 }
 
-export async function launchMinecraft(auth: MinecraftAuth, cfg: LaunchConfig): Promise<void> {
+function formatLauncherProgress(payload: any): string {
+  if (!payload || typeof payload !== "object") return "Descargando archivos del juego...";
+  if (typeof payload.task === "number" && typeof payload.total === "number" && payload.total > 0) {
+    const percent = Math.max(0, Math.min(100, Math.round((payload.task / payload.total) * 100)));
+    return `Descargando archivos del juego... ${percent}%`;
+  }
+  if (typeof payload.type === "string" && payload.type.trim()) {
+    return `Preparando Minecraft: ${payload.type}`;
+  }
+  return "Descargando archivos del juego...";
+}
+
+export async function launchMinecraft(auth: MinecraftAuth, cfg: LaunchConfig, report?: LaunchProgressReporter): Promise<void> {
   const launcher = new Client();
   const root = getDataRoot();
 
-  const versionId = await ensureFabricVersionJson(root, cfg.gameVersion, cfg.fabricLoaderVersion);
+  report?.(`Preparando ${cfg.gameVersion} + Fabric ${cfg.fabricLoaderVersion}...`);
+  const versionId = await ensureFabricVersionJson(root, cfg.gameVersion, cfg.fabricLoaderVersion, report);
   const gameDirectory = path.join(root, "instances", versionId);
 
+  report?.("Instalando mods base del launcher...");
   await syncRequiredMods({
     root,
     gameVersion: cfg.gameVersion,
     instanceDir: gameDirectory
   });
+  report?.("Mods base listos. Verificando archivos de Minecraft...");
 
   const options = {
     authorization: auth.mclcAuth,
@@ -68,7 +87,14 @@ export async function launchMinecraft(auth: MinecraftAuth, cfg: LaunchConfig): P
 
   launcher.on("debug", (e: unknown) => console.log("[debug]", e));
   launcher.on("data", (e: unknown) => console.log("[mc]", e));
-  launcher.on("progress", (e: unknown) => console.log("[download]", e));
+  launcher.on("progress", (e: unknown) => {
+    console.log("[download]", e);
+    report?.(formatLauncherProgress(e));
+  });
+  launcher.on("close", () => {
+    report?.("Minecraft se cerro.");
+  });
 
+  report?.("Iniciando Minecraft. La primera carga puede tardar varios minutos...");
   await launcher.launch(options);
 }
