@@ -1,55 +1,43 @@
 # PapuClient
 
-⚔️ Cliente de Minecraft para jugadores PvP y servidores competitivos.
+⚔️ Cliente de Minecraft para PvP y servidores competitivos.
 
-PapuClient es un launcher de escritorio para Windows diseñado para dar una experiencia más rápida, ordenada y lista para jugar en entornos PvP. El objetivo no es solo abrir Minecraft, sino entregar un cliente preparado para entrar a servidores competitivos con una base optimizada, identidad visual propia y funciones sociales integradas.
+PapuClient es un launcher para Windows hecho para entrar a jugar más rápido y con una base ya preparada para PvP. La idea es simple: abrir el cliente, iniciar sesión y tener una experiencia más ordenada, más cómoda y más pensada para pelear que para perder tiempo configurando todo desde cero.
 
-## ✨ Qué es PapuClient
+## Qué es
 
-PapuClient es software dedicado a Minecraft PvP. Está pensado para jugadores que quieren entrar a jugar con una configuración más cuidada, una instalación más controlada y herramientas orientadas a una experiencia competitiva.
+PapuClient junta en una sola app el launcher, la parte visual del cliente y las funciones sociales. Está orientado a jugadores de Minecraft que pasan la mayor parte del tiempo en modos competitivos, UHC y servidores PvP.
 
-Combina launcher, cliente visual y capa social en una sola aplicación.
+## En qué se enfoca
 
-## 🎯 En qué se enfoca
+- entrar rápido a jugar
+- tener una base optimizada para PvP
+- dar una experiencia más prolija y consistente
+- integrar lo social dentro del mismo cliente
+- mantener una identidad propia dentro del juego y del launcher
 
-- experiencia centrada en PvP
-- acceso rápido a servidores competitivos
-- cliente visual con identidad propia
-- instalación lista para jugar
-- base optimizada para rendimiento
-- integración social entre jugadores
-
-## 🚀 Funciones principales
+## Funciones principales
 
 - inicio de sesión con cuenta Microsoft
 - arranque de Minecraft con Fabric
-- instalación automática de la base del cliente
-- configuración inicial preparada para jugar
-- servidor oficial integrado en la lista multijugador
-- resource packs base incluidos con la instalación
-- sistema de amigos, solicitudes y chat
-- interfaz propia para gestionar versiones, juego y social
+- configuración base lista para jugar
+- servidor oficial ya agregado en multijugador
+- resource packs incluidos con la instalación
+- amigos, solicitudes, presencia, chat y llamadas
+- interfaz propia para versiones, juego y social
 
-## 💬 Social
+## Social
 
-PapuClient incorpora funciones sociales para conectar a jugadores dentro del ecosistema del cliente:
+PapuClient también busca que el cliente se sienta como un punto de encuentro para la comunidad. Por eso incluye sistema de amigos, solicitudes, presencia online, chat y llamadas dentro del mismo launcher.
 
-- lista de amigos
-- solicitudes de amistad
-- presencia online
-- chat
-- llamadas
-
-La idea es que el cliente no sea solo un launcher, sino también un punto de encuentro para comunidades PvP.
-
-## 🖥️ Plataforma
+## Plataforma
 
 Disponible para Windows.
 
-## 🧠 Visión
+## Descarga
 
-PapuClient está orientado a convertirse en un cliente enfocado en comunidades PvP, UHC y modos competitivos, con una experiencia más directa, más pulida y más alineada con lo que busca un jugador que entra a pelear y no a configurar todo desde cero.
+Puedes descargar la versión más reciente desde [Releases](https://github.com/VixoPapu/papu-client-download/releases).
 
-## 🤝 Repositorio oficial
+## Repositorio oficial
 
 https://github.com/VixoPapu/papu-client-download
