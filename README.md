@@ -1,50 +1,63 @@
-# PapuClient
+# PapuClient 🚀
 
 [![Release](https://img.shields.io/github/v/release/VixoPapu/papu-client-download?style=flat-square&color=3b82f6)](https://github.com/VixoPapu/papu-client-download/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows-0f172a?style=flat-square&logo=windows)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-3c873a?style=flat-square&logo=node.js&logoColor=white)
 ![Version](https://img.shields.io/badge/client-v0.1.8-f97316?style=flat-square)
 
-Cliente de Minecraft para PvP y servidores competitivos.
+**PapuClient** is a custom Minecraft client and launcher designed for competitive gameplay, PvP, and UHC.
 
-PapuClient es un launcher para Windows pensado para entrar a jugar rapido, con una base ya preparada para PvP y una experiencia mas limpia dentro del ecosistema del cliente.
+It provides a streamlined experience with a ready-to-play setup, integrated social features, and a clean interface — allowing players to jump into the game faster with minimal configuration.
 
-[Descargar ultima version](https://github.com/VixoPapu/papu-client-download/releases)
+[Download Latest Version](https://github.com/VixoPapu/papu-client-download/releases)
 
-## Resumen
+---
 
-- Cliente orientado a PvP, UHC y modos competitivos
-- Launcher propio para Windows
-- Acceso rapido al servidor oficial desde multijugador
-- Base del cliente ya preparada para jugar
-- Sistema social integrado con amigos, chat y llamadas
+## ✨ Overview
 
-## Que ofrece
+- Built for PvP, UHC, and competitive servers  
+- Custom launcher for Windows  
+- Pre-configured environment for immediate gameplay  
+- Quick access to the official server  
+- Integrated social system (friends, chat, calls)  
 
-PapuClient junta en una sola aplicacion el launcher, la parte visual del cliente y las funciones sociales. La idea es reducir configuracion manual y dar una experiencia mas directa para jugadores que pasan la mayor parte del tiempo en servidores PvP.
+---
 
-## Funciones principales
+## ⚙️ Features
 
-- inicio de sesion con cuenta Microsoft
-- arranque de Minecraft con Fabric
-- configuracion base lista para jugar
-- servidor oficial ya agregado en la lista multijugador
-- resource packs incluidos con la instalacion
-- amigos, solicitudes, presencia, chat y llamadas
-- interfaz propia para versiones, juego y social
+- Microsoft account authentication  
+- Minecraft launch with Fabric  
+- Optimized default configuration  
+- Pre-installed resource packs  
+- Official server preloaded in multiplayer  
+- Built-in social system:
+  - Friends & requests  
+  - Online presence  
+  - Chat & voice calls  
+- Custom UI for versions, gameplay, and social features  
 
-## Social
+---
 
-PapuClient tambien funciona como punto de encuentro para la comunidad del cliente. Incluye sistema de amigos, presencia online, chat y llamadas dentro del mismo launcher.
+## 🌐 Social Experience
 
-## Plataforma
+PapuClient is not just a launcher — it acts as a central hub for the community.
 
-Disponible para Windows.
+Players can connect, communicate, and interact directly within the client through an integrated social system.
 
-## Descarga
+---
 
-La version mas reciente se publica en [Releases](https://github.com/VixoPapu/papu-client-download/releases).
+## 💻 Platform
 
-## Repositorio oficial
+Available for **Windows**.
+
+---
+
+## 📥 Download
+
+The latest version is available on the [Releases page](https://github.com/VixoPapu/papu-client-download/releases).
+
+---
+
+## 📁 Official Repository
 
 https://github.com/VixoPapu/papu-client-download
