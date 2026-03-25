@@ -10,9 +10,11 @@
   <img src="https://img.shields.io/badge/node-%3E%3D20-3c873a?style=flat-square&logo=node.js&logoColor=white"/>
   <img src="https://img.shields.io/badge/client-v0.1.8-f97316?style=flat-square"/>
 </p>
+
 <p align="center">
   <b>Performance-focused Minecraft client for competitive players</b>
 </p>
+
 **PapuClient** is a custom Minecraft client and launcher designed for competitive gameplay, PvP, and UHC.
 
 It provides a streamlined experience with a ready-to-play setup, integrated social features, and a clean interface — allowing players to jump into the game faster with minimal configuration.
