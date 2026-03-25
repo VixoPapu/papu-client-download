@@ -1,8 +1,15 @@
-![PapuClient Banner](./banner.png)
-[![Release](https://img.shields.io/github/v/release/VixoPapu/papu-client-download?style=flat-square&color=3b82f6)](https://github.com/VixoPapu/papu-client-download/releases)
-![Platform](https://img.shields.io/badge/platform-Windows-0f172a?style=flat-square&logo=windows)
-![Node](https://img.shields.io/badge/node-%3E%3D20-3c873a?style=flat-square&logo=node.js&logoColor=white)
-![Version](https://img.shields.io/badge/client-v0.1.8-f97316?style=flat-square)
+<p align="center">
+  <img src="./banner.png" alt="PapuClient Banner"/>
+</p>
+
+<p align="center">
+  <a href="https://github.com/VixoPapu/papu-client-download/releases">
+    <img src="https://img.shields.io/github/v/release/VixoPapu/papu-client-download?style=flat-square&color=3b82f6"/>
+  </a>
+  <img src="https://img.shields.io/badge/platform-Windows-0f172a?style=flat-square&logo=windows"/>
+  <img src="https://img.shields.io/badge/node-%3E%3D20-3c873a?style=flat-square&logo=node.js&logoColor=white"/>
+  <img src="https://img.shields.io/badge/client-v0.1.8-f97316?style=flat-square"/>
+</p>
 
 **PapuClient** is a custom Minecraft client and launcher designed for competitive gameplay, PvP, and UHC.
 
