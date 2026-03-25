@@ -12,24 +12,31 @@
 </p>
 
 <p align="center">
-  <b>Performance-focused Minecraft client for competitive players</b>
+  <b>Performance-focused Minecraft client built for competitive players</b>
 </p>
 
-**PapuClient** is a custom Minecraft client and launcher designed for competitive gameplay, PvP, and UHC.
+<p align="center">
+  <a href="https://github.com/VixoPapu/papu-client-download/releases">
+    <b>⬇ Download Latest Version</b>
+  </a>
+</p>
 
-It provides a streamlined experience with a ready-to-play setup, integrated social features, and a clean interface — allowing players to jump into the game faster with minimal configuration.
+---
 
-[Download Latest Version](https://github.com/VixoPapu/papu-client-download/releases)
+## 🚀 Why PapuClient?
+
+- Faster startup, less setup  
+- Clean and modern UI  
+- Built for PvP, UHC and competitive gameplay  
+- All-in-one launcher + social experience  
 
 ---
 
 ## ✨ Overview
 
-- Built for PvP, UHC, and competitive servers  
-- Custom launcher for Windows  
-- Pre-configured environment for immediate gameplay  
-- Quick access to the official server  
-- Integrated social system (friends, chat, calls)  
+PapuClient is a custom Minecraft client and launcher designed to deliver a streamlined and ready-to-play experience.
+
+It removes unnecessary setup, integrates social features, and provides a clean interface — allowing players to focus entirely on gameplay.
 
 ---
 
@@ -40,34 +47,42 @@ It provides a streamlined experience with a ready-to-play setup, integrated soci
 - Optimized default configuration  
 - Pre-installed resource packs  
 - Official server preloaded in multiplayer  
-- Built-in social system:
-  - Friends & requests  
-  - Online presence  
-  - Chat & voice calls  
+
+### 🧑‍🤝‍🧑 Social System
+
+- Friends & requests  
+- Online presence  
+- Chat & voice calls  
+
+### 🎮 Interface
+
 - Custom UI for versions, gameplay, and social features  
 
 ---
 
-## 🌐 Social Experience
+## 📸 Preview
 
-PapuClient is not just a launcher — it acts as a central hub for the community.
-
-Players can connect, communicate, and interact directly within the client through an integrated social system.
+<!-- añade screenshots aquí -->
+<!-- ejemplo:
+![App](./assets/app.png)
+![Social](./assets/social.png)
+-->
 
 ---
 
 ## 💻 Platform
 
-Available for **Windows**.
+- Windows  
 
 ---
 
 ## 📥 Download
 
-The latest version is available on the [Releases page](https://github.com/VixoPapu/papu-client-download/releases).
+The latest version is available on the  
+👉 https://github.com/VixoPapu/papu-client-download/releases  
 
 ---
 
-## 📁 Official Repository
+## 📁 Repository
 
 https://github.com/VixoPapu/papu-client-download
