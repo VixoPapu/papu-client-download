@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./banner.png" alt="PapuClient Banner"/>
+  <img src="./banner_papu.png" alt="PapuClient Banner"/>
 </p>
 
 <p align="center">
