@@ -23,7 +23,7 @@
 
 ---
 
-## 🚀 Why PapuClient?
+## Why PapuClient?
 
 - Faster startup, less setup  
 - Clean and modern UI  
@@ -32,7 +32,7 @@
 
 ---
 
-## ✨ Overview
+## Overview
 
 PapuClient is a custom Minecraft client and launcher designed to deliver a streamlined and ready-to-play experience.
 
@@ -40,7 +40,7 @@ It removes unnecessary setup, integrates social features, and provides a clean i
 
 ---
 
-## ⚙️ Features
+## Features
 
 - Microsoft account authentication  
 - Minecraft launch with Fabric  
@@ -48,19 +48,19 @@ It removes unnecessary setup, integrates social features, and provides a clean i
 - Pre-installed resource packs  
 - Official server preloaded in multiplayer  
 
-### 🧑‍🤝‍🧑 Social System
+### Social System
 
 - Friends & requests  
 - Online presence  
 - Chat & voice calls  
 
-### 🎮 Interface
+### Interface
 
 - Custom UI for versions, gameplay, and social features  
 
 ---
 
-## 📸 Preview
+## Preview
 
 <!-- añade screenshots aquí -->
 <!-- ejemplo:
@@ -70,19 +70,19 @@ It removes unnecessary setup, integrates social features, and provides a clean i
 
 ---
 
-## 💻 Platform
+## Platform
 
 - Windows  
 
 ---
 
-## 📥 Download
+## Download
 
 The latest version is available on the  
-👉 https://github.com/VixoPapu/papu-client-download/releases  
+https://github.com/VixoPapu/papu-client-download/releases  
 
 ---
 
-## 📁 Repository
+## Repository
 
 https://github.com/VixoPapu/papu-client-download
