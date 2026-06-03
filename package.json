@@ -1,6 +1,6 @@
 {
   "name": "papuclient",
-  "version": "0.1.5",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "npm run app",
+    "dev": "node scripts/dev-runner.mjs",
     "app": "npm run build && electron electron/main.cjs",
     "cli": "npm run build && node dist/main.js",
     "start": "node dist/main.js",
@@ -23,18 +23,22 @@
     "@supabase/supabase-js": "^2.99.0",
     "electron-updater": "^6.8.3",
     "minecraft-launcher-core": "^3.18.2",
-    "msmc": "^5.0.5"
+    "msmc": "^5.0.5",
+    "skinview3d": "^3.4.1",
+    "three": "^0.183.2"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.19.15",
+    "@types/ws": "^8.18.1",
     "electron": "^36.0.0",
     "electron-builder": "^26.8.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   },
   "build": {
     "appId": "com.papuclient.launcher",
     "productName": "PapuClient",
+    "executableName": "PapuClient",
     "artifactName": "${productName}-Setup-${version}.${ext}",
     "directories": {
       "output": "artifacts"
@@ -44,7 +48,7 @@
       "dist/**/*",
       "electron/**/*",
       "images/**/*",
-      "sounds/**/*",
+      "Sounds/**/*",
       "package.json",
       "chat.config.example.json"
     ],
@@ -57,8 +61,36 @@
         ]
       },
       {
+        "from": "discord.config.json",
+        "to": "discord.config.json",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
         "from": "bundled-mods",
         "to": "bundled-mods",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "required-mods",
+        "to": "required-mods",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "default-resourcepacks",
+        "to": "default-resourcepacks",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "default-instance-configs",
+        "to": "default-instance-configs",
         "filter": [
           "**/*"
         ]
@@ -75,12 +107,16 @@
       "target": [
         "nsis"
       ],
-      "icon": "images/icon_client.png",
-      "signAndEditExecutable": false
+      "icon": "images/app_icon.ico",
+      "signAndEditExecutable": true
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "shortcutName": "PapuClient",
+      "installerIcon": "images/app_icon.ico",
+      "uninstallerIcon": "images/app_icon.ico",
+      "installerHeaderIcon": "images/app_icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
